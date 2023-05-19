@@ -21,7 +21,7 @@ echo ""
 echo "[$(date "+%Y-%m-%d %H:%M:%S")] Updating packages..."
 echo ""
 
-sudo yum -y update && sudo systemctl reboot
+sudo yum -y update
 
 echo ""
 ########################################
