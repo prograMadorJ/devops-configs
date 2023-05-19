@@ -1,3 +1,7 @@
+STEPS=18
+STEP=0
+SLEEP_SEC=3
+
 ########################################
 
 # STARTING LOGO
@@ -18,7 +22,7 @@ echo ""
 # UPDATING PACKAGES
 
 ########################################
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Updating packages..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Updating packages..."
 echo ""
 
 sudo yum -y update
@@ -29,7 +33,8 @@ echo ""
 # CONFIGURING REPO KUBERNETES
 
 ########################################
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Configure repo kubernetes..."
+sleep $SLEEP_SEC
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Configure repo kubernetes..."
 echo ""
 
 sudo tee /etc/yum.repos.d/kubernetes.repo<<EOF
@@ -48,7 +53,8 @@ echo ""
 # INSTALLING REQUIRE PACKAGES
 
 ########################################
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Installing require packages..."
+sleep $SLEEP_SEC
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Installing require packages..."
 echo ""
 
 sudo yum clean all && sudo yum -y makecache
@@ -60,7 +66,8 @@ echo ""
 # DISABLE SELinux AND SWAP
 
 ########################################
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Disable SELinux and Swap..."
+sleep $SLEEP_SEC
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Disable SELinux and Swap..."
 echo ""
 
 sudo setenforce 0
@@ -69,11 +76,12 @@ sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
 sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 sudo swapoff -a
 
-
+## this apply only master node
 sudo firewall-cmd --add-port={6443,2379-2380,10250,10251,10252,5473,179,5473}/tcp --permanent
 sudo firewall-cmd --add-port={4789,8285,8472}/udp --permanent
 sudo firewall-cmd --reload
 
+## this apply only worker nodes
 # sudo firewall-cmd --add-port={10250,30000-32767,5473,179,5473}/tcp --permanent
 # sudo firewall-cmd --add-port={4789,8285,8472}/udp --permanent
 # sudo firewall-cmd --reload
@@ -85,11 +93,12 @@ echo ""
 # INSTALL & CONFIGURING DOCKER | CONTAINERD | KUBELET | KUBEADM | KUBECTL
 
 ################################################################################
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Install & configuring kubernetes with Containerd..."
+sleep $SLEEP_SEC
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Install & configuring kubernetes with Containerd..."
 echo ""
 
 
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Configure persistent loading of modules..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Configure persistent loading of modules..."
 echo ""
 
 sudo tee /etc/modules-load.d/containerd.conf <<EOF
@@ -97,15 +106,17 @@ overlay
 br_netfilter
 EOF
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Configure modprobe..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Configure modprobe..."
 echo ""
 
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Set sysctl params..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Set sysctl params..."
 echo ""
 
 sudo tee /etc/sysctl.d/kubernetes.conf<<EOF
@@ -114,66 +125,91 @@ net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
 EOF
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Reload sysctl..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Reload sysctl..."
 echo ""
 
 sudo sysctl --system
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Install required packages..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Install required packages..."
 echo ""
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Add Docker repo..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Add Docker repo..."
 echo ""
 
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Install docker, containerd, kubernetes required systems..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Install docker, containerd, kubernetes required systems..."
 echo ""
 
 sudo yum update -y && yum install -y docker-ce docker-ce-cli docker-compose-plugin containerd.io kubelet kubeadm kubectl
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Configure containerd and start services..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Configure containerd and start services..."
 echo ""
 
 sudo mkdir -p /etc/containerd
 sudo containerd config default > /etc/containerd/config.toml
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Start containerd..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Start containerd..."
 echo ""
 
 sudo systemctl restart containerd
 sudo systemctl enable containerd
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Start Docker..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Start Docker..."
 echo ""
 
 sudo systemctl restart docker
 sudo systemctl enable docker
 
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Start Kubelet..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Start Kubelet..."
 echo ""
 
 sudo systemctl enable kubelet
 
 # echo ""
-# echo "[$(date "+%Y-%m-%d %H:%M:%S")] Remove Containerd/Config.toml..."
+# echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ]  Remove Containerd/Config.toml..."
 # echo ""
 
 # sudo rm /etc/containerd/config.toml
 
-
+sleep $SLEEP_SEC
 echo ""
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] Starting Kubeadm..."
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Starting Kubeadm..."
 echo ""
 
 kubeadm init
+
+
+sleep $SLEEP_SEC
+echo ""
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] [ $((++STEP))/$STEPS ] Appling Scripts & Configurations..."
+echo ""
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
+
+echo ""
+echo "[$(date "+%Y-%m-%d %H:%M:%S")] *** Kubernetes Instalation Successfuly ***"
+echo ""
